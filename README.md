@@ -11,8 +11,10 @@ under any licence.
 | Path | What it is |
 |---|---|
 | [`relay-v1.md`](relay-v1.md) | Relay Protocol v1: keys, envelope, endpoints, watch, client behaviour, limits, and the optional extensions (push, signal, ICE) |
+| [`timeline-v1.md`](timeline-v1.md) | Timeline v1: one keyed state on both devices, synced as commits that merge into one order, on top of Relay Protocol v1 and without changing it |
 | [`spec/vectors.py`](spec/vectors.py) | Independent reference implementation. Python standard library only; checks itself against RFC 8439 and RFC 5869 before it writes anything. |
 | [`spec/vectors.json`](spec/vectors.json) | Known-answer vectors: two credential sets, four envelopes, eleven rejections, wire-format cases, and the signal extension's keys, two frames and five rejections |
+| [`spec/timeline.py`](spec/timeline.py), [`spec/timeline.json`](spec/timeline.json) | Independent reference and known-answer vectors for Timeline v1: clock steps, three commits, one message of each type, merge orders, a catch-up, rejections |
 
 ## The protocol in one page
 
@@ -61,6 +63,9 @@ they are.
 | [zerobyte-dotnet-sdk](https://github.com/zerobyte-cloud/zerobyte-dotnet-sdk) | Windows and any .NET 10 platform | Apache-2.0 |
 
 If you write another implementation, open an issue and I will list it here.
+
+Timeline v1 is implemented in the Swift SDK (`ZeroByteTimeline`, 1.2.0); the
+other SDKs do not have it yet. It needs nothing from the relay.
 
 ## Security
 
