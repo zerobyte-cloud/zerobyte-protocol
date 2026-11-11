@@ -64,8 +64,9 @@ they are.
 
 If you write another implementation, open an issue and I will list it here.
 
-Timeline v1 is implemented in the Swift SDK (`ZeroByteTimeline`, 1.2.0); the
-other SDKs do not have it yet. It needs nothing from the relay.
+Timeline v1 is implemented in every SDK from 1.2.0: `ZeroByteTimeline` (Swift),
+`zerobyte-timeline` (Kotlin), `@zerobyte-cloud/sdk/timeline` (JavaScript) and
+`ZeroByte.Timeline` (.NET). It needs nothing from the relay.
 
 ## Security
 
