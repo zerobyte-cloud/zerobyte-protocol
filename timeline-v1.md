@@ -140,13 +140,20 @@ Each replica writes its messages in its own direction: the primary `p2c`, the co
 `c2p`. One run of a replica:
 
 1. Fetch the other direction after the last envelope read, open each envelope, merge each
-   message in order. Keep the latest catch-up request.
+   message in order. Keep the latest catch-up request. The other replica confirms this one's
+   commits through a sequence with its head for this replica in a state, or with `seen` in
+   a commit; drop confirmed commits that are still waiting to be written.
 2. Persist, then prune through the highest envelope sequence fetched.
 3. Commit pending changes.
-4. Answer the catch-up request, if any.
+4. Answer the catch-up request, if any. A long answer may be written over several runs,
+   keeping its place; its final part then carries the heads from when the answer began, so
+   that commits made meanwhile are not taken as covered by it. A newer request replaces an
+   answer still being written. An answer with no entries and no head above the
+   requester's is not written.
 5. Write, in order: the commits and catch-up parts not yet written; then a state if this
-   run merged anything and wrote no commit, or if this replica asks for a catch-up. A new
-   replica asks on its first run.
+   run merged a commit, replaced an entry or raised a head and wrote no commit, or if this
+   replica asks for a catch-up. A new replica asks on its first run. A run that read only
+   what this replica already had writes no state.
 6. On `quota_exceeded`, stop and keep what was not written for the next run.
 
 The last envelope of a run may ask the relay for a silent push to wake the other device.
@@ -156,6 +163,8 @@ The last envelope of a run may ask the relay for a silent push to wake the other
 Two replicas connected directly (a local network, for example) exchange state messages,
 answer each other's state with a full catch-up (own entries and own head included) and
 close. Commits the relay delivers later are then at or below the heads and are skipped.
+Commits a replica makes and sends while connected directly also wait to be written to the
+relay (§6), until the other replica confirms them.
 
 ## 8. What anyone else sees
 

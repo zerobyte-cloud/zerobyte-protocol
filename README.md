@@ -39,13 +39,23 @@ itself.
 The details, including every status code and limit, are in
 [`relay-v1.md`](relay-v1.md).
 
+Timeline v1 builds on the envelopes without changing them: one keyed state that
+both devices keep. Each device sends only the keys it changed, as commits
+ordered by a hybrid logical clock, and both merge every commit into the same
+state, the latest stamp winning. A device that is new, lost its copy or missed
+a commit asks the other for a catch-up; a long one arrives over several runs.
+A run with nothing new to send writes nothing. The details are in
+[`timeline-v1.md`](timeline-v1.md).
+
 ## Test vectors
 
-Implementations copy `spec/vectors.json` byte for byte and test against it.
-None of them regenerates it. The file changes only when the protocol does:
+Implementations copy `spec/vectors.json`, and for Timeline v1
+`spec/timeline.json`, byte for byte and test against them. None of them
+regenerates them. The files change only when the protocol does:
 
 ```sh
 python3 spec/vectors.py > spec/vectors.json
+python3 spec/timeline.py > spec/timeline.json
 ```
 
 A change to the wire format is a new protocol version (`relay-v2.md`), never an
