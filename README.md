@@ -97,7 +97,7 @@ don't present it as `zerobyte.cloud`.
 
 ## About ZeroByte
 
-ZeroByte is an open-source project by Szymon Michalik: the protocol, the relay
-and the SDKs. To use ZeroByte in your app, run your own relay (see
+ZeroByte is a project by Szymon Michalik: an open protocol, open-source SDKs
+and a source-available relay. To use ZeroByte in your app, run your own relay (see
 [zerobyte-relay](https://github.com/zerobyte-cloud/zerobyte-relay)) or register the app on
 the hosted relay at [console.zerobyte.cloud](https://console.zerobyte.cloud).
