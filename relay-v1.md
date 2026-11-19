@@ -56,7 +56,7 @@ carries `Authorization: Bearer <token>`. An unknown app and every unknown path a
 | `PUT …` with `{"tokenDigest": "<hex>"}` | Claim: the first bearer wins. The body must name the digest of the bearer presented. | 201 claimed, 204 already yours, 403 someone else's |
 | `DELETE …` | Erase the mailbox, close watchers | 204 |
 | `PUT …/<dir>/<seq>` | Store one envelope; its header must match the path | 201; 409 with `X-Relay-Last` if `seq` is not above the last; 507 full |
-| `GET …/<dir>?after=&limit=` | Envelopes after a sequence, oldest first, at most 16 | 200, [wire body](#wire-body), `X-Relay-More: 0\|1` |
+| `GET …/<dir>?after=&limit=` | Envelopes after a sequence, oldest first, at most 16; starts their [read time](#read-time) | 200, [wire body](#wire-body), `X-Relay-More: 0\|1` |
 | `HEAD …/<dir>` | The last sequence ever stored | 200, `X-Relay-Last` (absent if none) |
 | `DELETE …/<dir>?through=` | Drop everything up to a sequence | 204 |
 | `GET …/<dir>/watch` | WebSocket, see below | 101 |
@@ -116,6 +116,19 @@ bearer and never echoes it back. Fetch once after the socket opens, and again on
 reconnect. A direction takes at most 8 watch sockets; another answers 429 with
 `Retry-After: 60`. Erasing the mailbox closes every socket with 1000.
 
+### Read time
+
+A fetch is a read, and only the reader of a direction fetches it. The first fetch that returns
+an envelope, or asks for envelopes after it (`after` at or above its sequence), starts the
+envelope's read time. When the read time ends, the relay deletes the envelope whether or not
+the reader pruned it; pruning deletes it at once. A later fetch does not extend the read time,
+and fetches less than a minute apart may share the first one's deadline. An envelope stored
+after a fetch is not covered by it, even if that fetch named a higher `after`.
+
+The read time is a day. A relay may give an app its own, from 0 to 1440 minutes; with 0 the
+fetch itself deletes what it returns, so a response lost in transit cannot be fetched again.
+Envelopes nobody fetched wait until they are read or the mailbox is erased.
+
 ## 4. Client behaviour
 
 - Claim once per mailbox (idempotent). Both devices may claim; the second gets 204.
@@ -123,7 +136,8 @@ reconnect. A direction takes at most 8 watch sockets; another answers 429 with
   continue from `X-Relay-Last` + 1 and seal again with a new nonce.
 - To receive: fetch after your last accepted sequence until `X-Relay-More` is 0, open each
   envelope, then prune through the highest sequence you saw, including envelopes that failed
-  to open: they never will.
+  to open: they never will. Persist what you accepted within the read time: after it, the
+  envelopes a fetch returned are gone.
 - Persist the last accepted sequence. Erase the mailbox when the devices unpair.
 
 ## 5. Limits
@@ -135,12 +149,13 @@ reconnect. A direction takes at most 8 watch sockets; another answers 429 with
 | One fetch | 16 envelopes |
 | Watch sockets | 8 per direction |
 | Idle mailbox | Erased 30 to 31 days after the last write or claim |
+| Read time | A fetched envelope is deleted a day after the first fetch that returned it |
 
 These are the defaults. A relay may give an app its own envelope count (16 … 4096), mailbox
-size (1 … 256 MiB), largest plaintext (1 KiB … 1 MiB) and idle time (1 … 365 days). A client
-learns the limits it hit from 413 and 507. A relay that bills apps may refuse a write with 402 when the
-app's plan does not cover it; reading, pruning and erasing still work. SDKs report 402, 413 and
-507 as `quota_exceeded`.
+size (1 … 256 MiB), largest plaintext (1 KiB … 1 MiB), idle time (1 … 365 days) and read time
+(0 … 1440 minutes). A client learns the limits it hit from 413 and 507. A relay that bills apps
+may refuse a write with 402 when the app's plan does not cover it; reading, pruning and erasing
+still work. SDKs report 402, 413 and 507 as `quota_exceeded`.
 
 ## 6. Test vectors
 
