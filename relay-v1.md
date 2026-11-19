@@ -127,7 +127,17 @@ after a fetch is not covered by it, even if that fetch named a higher `after`.
 
 The read time is a day. A relay may give an app its own, from 0 to 1440 minutes; with 0 the
 fetch itself deletes what it returns, so a response lost in transit cannot be fetched again.
-Envelopes nobody fetched wait until they are read or the mailbox is erased.
+Envelopes nobody fetched wait until they are read or the mailbox is erased, unless the app has
+a storage time.
+
+### Storage time
+
+A relay may give an app a storage time, from 1 to 8760 hours; by default there is none. The
+relay then deletes any envelope still stored that long after it was stored, read or not, and
+tells neither side. It may delete it up to an hour, or a 24th of the storage time if that is
+shorter, before that, never after. A reader away for longer misses those envelopes: an app
+with a storage time must be able to recover them, as Timeline v1 does when the next commit
+from the other replica shows a gap and it asks for a catch-up.
 
 ## 4. Client behaviour
 
@@ -150,12 +160,14 @@ Envelopes nobody fetched wait until they are read or the mailbox is erased.
 | Watch sockets | 8 per direction |
 | Idle mailbox | Erased 30 to 31 days after the last write or claim |
 | Read time | A fetched envelope is deleted a day after the first fetch that returned it |
+| Storage time | None: an envelope nobody fetches waits for the reader |
 
 These are the defaults. A relay may give an app its own envelope count (16 … 4096), mailbox
-size (1 … 256 MiB), largest plaintext (1 KiB … 1 MiB), idle time (1 … 365 days) and read time
-(0 … 1440 minutes). A client learns the limits it hit from 413 and 507. A relay that bills apps
-may refuse a write with 402 when the app's plan does not cover it; reading, pruning and erasing
-still work. SDKs report 402, 413 and 507 as `quota_exceeded`.
+size (1 … 256 MiB), largest plaintext (1 KiB … 1 MiB), idle time (1 … 365 days), read time
+(0 … 1440 minutes) and storage time (1 … 8760 hours). A client learns the limits it hit from
+413 and 507. A relay that bills apps may refuse a write with 402 when the app's plan does not
+cover it; reading, pruning and erasing still work. SDKs report 402, 413 and 507 as
+`quota_exceeded`.
 
 ## 6. Test vectors
 

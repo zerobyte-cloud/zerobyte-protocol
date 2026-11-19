@@ -33,7 +33,8 @@ moved to another mailbox without failing to open.
 
 The relay files envelopes under `/v1/<app>/mailbox/<mailbox>/<direction>/<sequence>`.
 The reader fetches, opens and prunes them; what a fetch returned and the reader
-did not prune, the relay deletes a day later. A WebSocket announces new sequence
+did not prune, the relay deletes a day later, and an app may have a storage
+time after which it deletes even what nobody read. A WebSocket announces new sequence
 numbers so clients do not poll. A mailbox without a write for 30 days erases
 itself.
 
